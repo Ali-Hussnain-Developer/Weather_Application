@@ -52,7 +52,26 @@ dependencies {
     // Jetpack Navigation component
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
+    // Retrofit for networking
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
 
-    //Coroutines
+// Coroutines and Flow
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
+
+// ViewModel and LiveData
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
+
+// For accessing location
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.core.ktx)
+
+//Swipe Refresh Layout
+    implementation(libs.androidx.swiperefreshlayout)
+
+//Glide
+    implementation(libs.glide)
+
 }

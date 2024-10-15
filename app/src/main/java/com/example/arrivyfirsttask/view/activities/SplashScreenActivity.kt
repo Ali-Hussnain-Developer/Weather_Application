@@ -21,7 +21,7 @@ class SplashScreenActivity : AppCompatActivity() {
 
     private fun initialization() {
         lifecycleScope.launch {
-            delay(20000) // Delay for 3 seconds
+            delay(2000) // Delay for 3 seconds
             // Start the HomeActivity after the delay
             val intent = Intent(this@SplashScreenActivity, MainActivity::class.java)
             startActivity(intent) // Navigate to HomeActivity

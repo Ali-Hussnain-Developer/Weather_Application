@@ -1,4 +1,4 @@
-package com.example.arrivyfirsttask.utils
+package com.example.arrivyfirsttask.classes.utils
 
 import android.annotation.SuppressLint
 import android.content.Context

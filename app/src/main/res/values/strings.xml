@@ -5,4 +5,13 @@
     <string name="weather">Weather</string>
     <string name="fore_casts">ForeCasts</string>
     <string name="get_start">Get Start</string>
+    <string name="enter_city">Enter City</string>
+    <string name="min_18">Min:18</string>
+    <string name="today">Today</string>
+    <string name="july_21">July,21</string>
+    <string name="max_24">Max:24</string>
+    <string name="precipitations">Precipitations</string>
+    <string name="_19">19</string>
+    <string name="_15_00">15:00</string>
+    <string name="lahore">Lahore</string>
 </resources>
