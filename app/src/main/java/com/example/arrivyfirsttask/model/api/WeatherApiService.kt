@@ -13,12 +13,12 @@ interface WeatherApiService {
         @Query("appid") appId: String,
         @Query("units") units: String = "metric"
     ): WeatherResponse
-    @GET("onecall")
-    suspend fun getHourlyWeather(
+
+    @GET("forecast")
+    suspend fun getHourlyWeatherData(
         @Query("lat") latitude: Double,
         @Query("lon") longitude: Double,
-        @Query("exclude") exclude: String = "current,minutely,daily,alerts",
-        @Query("appid") apiKey: String,
+        @Query("appid") appId: String,
         @Query("units") units: String = "metric"
-    ): Response<HourlyWeatherResponse>
+    ): HourlyWeatherResponse // Assuming you have a separate model for hourly data
 }

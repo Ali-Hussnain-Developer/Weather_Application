@@ -57,13 +57,31 @@ data class Sys(
     val sunset: Long
 )
 data class HourlyWeatherResponse(
-    val hourly: List<HourlyWeatherData>
+    val list: List<HourlyData>,
+    val city: City
 )
 
-data class HourlyWeatherData(
-    val dt: Long, // Timestamp
-    val temp: Double, // Temperature
-    val weather: List<Weather> // Weather conditions
+data class HourlyData(
+    val dt: Long,
+    val main: Main,
+    val weather: List<Weather>,
+    val wind: Wind,
+    val clouds: Clouds,
+    val visibility: Int
 )
 
-
+data class City(
+    val id: Int,
+    val name: String,
+    val coord: Coord,
+    val country: String,
+    val population: Int,
+    val timezone: Int,
+    val sunrise: Long,
+    val sunset: Long
+)
+data class HourlyWeatherItem(
+    val time: String,
+    val temperature: String,
+    val icon: String
+)
