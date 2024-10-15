@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">ArrivyFirstTask</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="weather">Weather</string>
+    <string name="fore_casts">ForeCasts</string>
+    <string name="get_start">Get Start</string>
+</resources>
