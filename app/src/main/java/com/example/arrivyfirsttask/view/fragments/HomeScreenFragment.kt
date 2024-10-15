@@ -9,8 +9,10 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
+import com.example.arrivyfirsttask.R
 import com.example.arrivyfirsttask.adapter.HourlyWeatherAdapter
 import com.example.arrivyfirsttask.classes.data.HourlyWeatherItem
 import com.example.arrivyfirsttask.classes.data.WeatherResponse
@@ -23,12 +25,20 @@ import com.example.arrivyfirsttask.databinding.FragmentHomeScreenBinding
 import com.example.arrivyfirsttask.model.api.WeatherApiClient
 import com.example.arrivyfirsttask.model.repository.WeatherRepository
 import com.example.arrivyfirsttask.viewModel.WeatherViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 class HomeScreenFragment : Fragment() {
     private var _binding: FragmentHomeScreenBinding? = null
     private val binding get() = _binding!!
     private lateinit var weatherViewModel: WeatherViewModel
+    private var cityName:String?=null
+    private var maxTemp:String?=null
+    private var minTemp:String?=null
+    private var sunRiseTime:String?=null
+    private var sunSetTime:String?=null
+    private var latitude:Double?=null
+    private var longitude:Double?=null
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -46,6 +56,11 @@ class HomeScreenFragment : Fragment() {
     private fun init() {
         checkInternetConnection()
         setUpListeners()
+        setTodayDate()
+    }
+
+    private fun setTodayDate() {
+        binding.tvTodayDate.text = DateUtils.getCurrentDate()
     }
 
     private fun setUpListeners() {
@@ -59,7 +74,21 @@ class HomeScreenFragment : Fragment() {
                 activity?.hideKeyboard()
             }
         }
+        binding.layoutHourlyWeather.setOnClickListener{
+            senDataToWeatherDetailScreen()
+        }
 
+    }
+
+    private fun senDataToWeatherDetailScreen() {
+        val bundle = Bundle().apply {
+            putString("cityName",cityName)
+            putString("maxTemp",maxTemp)
+            putString("minTemp",minTemp)
+            putString("sunRiseTime",sunRiseTime)
+            putString("sunSetTime",sunSetTime)
+        }
+        findNavController().navigate(R.id.action_homeScreenFragment_to_detailScreenFragment, bundle)
     }
 
     private fun checkInternetConnection() {
@@ -89,10 +118,15 @@ class HomeScreenFragment : Fragment() {
                     is ApiResult.Success -> {
                         setWeatherData(result.data)
 
-                        // Call for hourly weather data using the obtained latitude and longitude
-                        val latitude = result.data.coord.lat
-                        val longitude = result.data.coord.lon
-                        weatherViewModel.fetchHourlyWeatherData(latitude, longitude)
+                        latitude = result.data.coord.lat
+                        longitude = result.data.coord.lon
+                        cityName=result.data.name
+                        maxTemp=result.data.main.temp_max.toString()
+                        minTemp=result.data.main.temp_min.toString()
+                        sunRiseTime=result.data.sys.sunrise.toString()
+                        sunSetTime=result.data.sys.sunset.toString()
+
+                        weatherViewModel.fetchHourlyWeatherData(latitude!!, longitude!!)
 
                         // Collect hourly weather data in a separate coroutine
                         launch {
@@ -103,7 +137,6 @@ class HomeScreenFragment : Fragment() {
                                     }
 
                                     is ApiResult.Success -> {
-                                        Log.d("Hourly Weather Result", "${hourlyResult.data}")
                                         // Update UI with hourly data
                                         val hourlyItems = hourlyResult.data.list.map { hourlyData ->
                                             val time =
@@ -169,10 +202,8 @@ class HomeScreenFragment : Fragment() {
     private fun setWeatherData(data: WeatherResponse) {
         binding.tvTemperature.text = "${data.main.temp}°C"
         binding.tvCityName.text = data.name
-        binding.tvCityName.text = data.name
         binding.tvMaxTemp.text = "Max: ${data.main.temp_max}°C "
         binding.tvMinTemp.text = "Min: ${data.main.temp_min}°C"
-        binding.tvTodayDate.text = DateUtils.getCurrentDate()
         loadWeatherIcon(data.weather[0].icon)
     }
 

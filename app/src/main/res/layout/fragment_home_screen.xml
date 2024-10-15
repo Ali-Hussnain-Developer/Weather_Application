@@ -140,6 +140,7 @@
             app:layout_constraintTop_toBottomOf="@+id/ivWeatherStatusIcon">
 
             <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/layoutHourlyWeather"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@drawable/splash_background_gradient"
