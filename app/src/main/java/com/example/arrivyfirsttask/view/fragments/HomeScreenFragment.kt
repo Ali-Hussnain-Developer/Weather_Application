@@ -2,7 +2,6 @@ package com.example.arrivyfirsttask.view.fragments
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,7 +24,6 @@ import com.example.arrivyfirsttask.databinding.FragmentHomeScreenBinding
 import com.example.arrivyfirsttask.model.api.WeatherApiClient
 import com.example.arrivyfirsttask.model.repository.WeatherRepository
 import com.example.arrivyfirsttask.viewModel.WeatherViewModel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 class HomeScreenFragment : Fragment() {
@@ -43,7 +41,6 @@ class HomeScreenFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        // Inflate the layout using the binding object
         _binding = FragmentHomeScreenBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -68,10 +65,13 @@ class HomeScreenFragment : Fragment() {
             checkInternetConnection()
         }
         binding.btnSearchCity.setOnClickListener {
-            val city = binding.EdtCityName.text.toString()
+            val city = binding.EdtCityName.text.toString().trim()
             if (city.isNotEmpty()) {
                 weatherViewModel.fetchWeatherByCity(city)
                 activity?.hideKeyboard()
+            }
+            else{
+                Toast.makeText(requireContext(),"Please Enter city Name",Toast.LENGTH_SHORT).show()
             }
         }
         binding.layoutHourlyWeather.setOnClickListener{
@@ -95,10 +95,8 @@ class HomeScreenFragment : Fragment() {
 
     private fun checkInternetConnection() {
         if (NetworkUtil.isInternetAvailable(requireContext())) {
-            // Internet is available, perform API call
             callWeatherAPI()
         } else {
-            // Show a message or take appropriate action
             Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT).show()
         }
     }
@@ -114,10 +112,11 @@ class HomeScreenFragment : Fragment() {
             weatherViewModel.weatherData.collect { result ->
                 when (result) {
                     is ApiResult.Loading -> {
-                        // API call is in progress; you might show a loading spinner if needed
+                       binding.progressBar.visibility=View.VISIBLE
                     }
 
                     is ApiResult.Success -> {
+                        binding.progressBar.visibility=View.GONE
                         setWeatherData(result.data)
 
                         latitude = result.data.coord.lat
@@ -135,10 +134,11 @@ class HomeScreenFragment : Fragment() {
                             weatherViewModel.hourlyWeatherData.collect { hourlyResult ->
                                 when (hourlyResult) {
                                     is ApiResult.Loading -> {
-                                        // You can show a loading spinner for hourly data if needed
+                                        binding.progressBar.visibility=View.VISIBLE
                                     }
 
                                     is ApiResult.Success -> {
+                                        binding.progressBar.visibility=View.GONE
                                         // Update UI with hourly data
                                         val hourlyItems = hourlyResult.data.list.map { hourlyData ->
                                             val time =
@@ -165,6 +165,7 @@ class HomeScreenFragment : Fragment() {
                                     }
 
                                     is ApiResult.Error -> {
+                                        binding.progressBar.visibility=View.GONE
                                         // Handle error for hourly data
                                         Toast.makeText(requireContext(), "Error loading hourly data", Toast.LENGTH_SHORT).show()
                                         // Hide the refresh indicator in case of error
@@ -172,6 +173,7 @@ class HomeScreenFragment : Fragment() {
                                     }
 
                                     null -> {
+                                        binding.progressBar.visibility=View.GONE
                                         // Handle null case for hourly data
                                         binding.swipeRefreshLayout.isRefreshing = false
                                     }
@@ -183,14 +185,13 @@ class HomeScreenFragment : Fragment() {
                     }
 
                     is ApiResult.Error -> {
-                        // Handle error for weather data
+                        binding.progressBar.visibility=View.GONE
                         Toast.makeText(requireContext(), "Error loading weather data", Toast.LENGTH_SHORT).show()
-                        // Hide the refresh indicator in case of error
                         binding.swipeRefreshLayout.isRefreshing = false
                     }
 
                     null -> {
-                        // Handle null case for weather data
+                        binding.progressBar.visibility=View.GONE
                         binding.swipeRefreshLayout.isRefreshing = false
                     }
                 }
