@@ -1,9 +1,9 @@
-package com.example.arrivyfirsttask
+package com.example.arrivyfirsttask.model.local
 
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
 
-open class RealmModel : RealmObject(){
+open class WeatherDataRealmModel : RealmObject(){
     @PrimaryKey
     var id: Int = 0
     var name: String = ""

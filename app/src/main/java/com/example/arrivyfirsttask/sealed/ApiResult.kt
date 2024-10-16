@@ -1,4 +1,4 @@
-package com.example.arrivyfirsttask.classes.sealed
+package com.example.arrivyfirsttask.sealed
 
 // ApiResult.kt
 sealed class ApiResult<out T> {

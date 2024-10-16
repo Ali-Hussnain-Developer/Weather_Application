@@ -1,6 +1,8 @@
 package com.example.arrivyfirsttask.view.fragments
 
 import android.annotation.SuppressLint
+import android.app.AlertDialog
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -11,21 +13,23 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.arrivyfirsttask.HourlyWeatherRealmModel
+import com.example.arrivyfirsttask.model.local.HourlyWeatherRealmModel
 import com.example.arrivyfirsttask.R
-import com.example.arrivyfirsttask.RealmModel
+import com.example.arrivyfirsttask.model.local.WeatherDataRealmModel
 import com.example.arrivyfirsttask.adapter.HourlyWeatherAdapter
-import com.example.arrivyfirsttask.classes.data.HourlyWeatherItem
-import com.example.arrivyfirsttask.classes.data.WeatherResponse
-import com.example.arrivyfirsttask.classes.sealed.ApiResult
-import com.example.arrivyfirsttask.classes.utils.DateUtils
-import com.example.arrivyfirsttask.classes.utils.ImageUtils
-import com.example.arrivyfirsttask.classes.utils.KeyBoardUtils.hideKeyboard
-import com.example.arrivyfirsttask.classes.utils.NetworkUtil
-import com.example.arrivyfirsttask.classes.utils.TimeUtils
+import com.example.arrivyfirsttask.model.remote.HourlyWeatherItem
+import com.example.arrivyfirsttask.model.remote.WeatherResponse
+import com.example.arrivyfirsttask.sealed.ApiResult
+import com.example.arrivyfirsttask.utils.DateUtils
+import com.example.arrivyfirsttask.utils.ImageUtils
+import com.example.arrivyfirsttask.utils.KeyBoardUtils.hideKeyboard
+import com.example.arrivyfirsttask.utils.NetworkUtil
+import com.example.arrivyfirsttask.utils.TimeUtils
 import com.example.arrivyfirsttask.databinding.FragmentHomeScreenBinding
-import com.example.arrivyfirsttask.model.api.WeatherApiClient
+import com.example.arrivyfirsttask.model.remote.WeatherApiClient
 import com.example.arrivyfirsttask.model.repository.WeatherRepository
+import com.example.arrivyfirsttask.utils.DialogUtils
+import com.example.arrivyfirsttask.utils.ListUtils
 import com.example.arrivyfirsttask.viewModel.WeatherViewModel
 import io.realm.Realm
 import kotlinx.coroutines.CoroutineScope
@@ -44,6 +48,8 @@ class HomeScreenFragment : Fragment() {
     private var sunSetTime: String? = null
     private var latitude: Double? = null
     private var longitude: Double? = null
+    private var humidity: String? = null
+    private var windSpeed: String? = null
 
 
     override fun onCreateView(
@@ -71,16 +77,13 @@ class HomeScreenFragment : Fragment() {
     }
 
     private fun setUpListeners() {
-        binding.swipeRefreshLayout.setOnRefreshListener {
-            callRealmData()
-        }
         binding.btnSearchCity.setOnClickListener {
             val city = binding.EdtCityName.text.toString().trim()
             if (city.isNotEmpty()) {
                 if (NetworkUtil.isInternetAvailable(requireContext())) {
                     weatherViewModel.fetchWeatherByCity(city)
                     activity?.hideKeyboard()
-                    callWeatherAPI()
+                    handleWeatherAPIResponse()
                 } else {
                     Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT)
                         .show()
@@ -91,7 +94,10 @@ class HomeScreenFragment : Fragment() {
             }
         }
         binding.layoutHourlyWeather.setOnClickListener {
-            senDataToWeatherDetailScreen()
+            if (cityName != null) {
+                senDataToWeatherDetailScreen()
+            }
+
         }
 
     }
@@ -103,6 +109,8 @@ class HomeScreenFragment : Fragment() {
             putString("minTemp", minTemp)
             putString("sunRiseTime", sunRiseTime)
             putString("sunSetTime", sunSetTime)
+            putString("humidity", humidity)
+            putString("windSpeed", windSpeed)
         }
         findNavController().navigate(R.id.action_homeScreenFragment_to_detailScreenFragment, bundle)
     }
@@ -110,7 +118,7 @@ class HomeScreenFragment : Fragment() {
     @SuppressLint("SetTextI18n")
     private fun callRealmData() {
         CoroutineScope(Dispatchers.IO).launch {
-            val data = retrieveDataFromRealm()
+            val data = retrieveWeatherDataFromRealm()
             val hourlyWeatherData = retrieveHourlyWeatherData()
             if (data.isNotEmpty()) {
                 val realmModel = data[0]
@@ -124,47 +132,35 @@ class HomeScreenFragment : Fragment() {
                         realmModel.weatherStatusIcon,
                         binding.ivWeatherStatusIcon
                     )
-                    val hourlyWeatherItems = convertToHourlyWeatherItem(hourlyWeatherData)
+                    val hourlyWeatherItems = ListUtils.convertToHourlyWeatherItem(hourlyWeatherData)
                     setDataInRecyclerView(hourlyWeatherItems)
-                    Log.d("fetchData", "Retrieved data: $hourlyWeatherData")
                 }
             } else {
-                Log.d("fetchData", "No data found in Realm")
+                binding.tvCityName.text = "Search Some City"
             }
-            Log.d("fetchData", "Retrieved data: $data")
         }
     }
 
-    private fun convertToHourlyWeatherItem(realmData: List<HourlyWeatherRealmModel>): List<HourlyWeatherItem> {
-        return realmData.map { realmItem ->
-            HourlyWeatherItem(
-                time = realmItem.time,
-                temperature = realmItem.temperature,
-                icon = realmItem.weatherStatusIcon
-            )
-        }
-    }
-    private fun retrieveDataFromRealm(): List<RealmModel> {
+
+    private fun retrieveWeatherDataFromRealm(): List<WeatherDataRealmModel> {
         var realmDb = Realm.getDefaultInstance()
-        val results: List<RealmModel> = realmDb.where(RealmModel::class.java).findAll()
+        val results: List<WeatherDataRealmModel> =
+            realmDb.where(WeatherDataRealmModel::class.java).findAll()
         val dataList = realmDb.copyFromRealm(results)
         realmDb.close()
         return dataList
     }
 
     private fun retrieveHourlyWeatherData(): List<HourlyWeatherRealmModel> {
-        val realmDb = Realm.getDefaultInstance() // Get default instance
+        val realmDb = Realm.getDefaultInstance()
         val results =
-            realmDb.where(HourlyWeatherRealmModel::class.java).findAll() // Query all records
-        val dataList = realmDb.copyFromRealm(results) // Copy results to a detached list
-        realmDb.close() // Close the Realm instance
-        return dataList // Return the list
+            realmDb.where(HourlyWeatherRealmModel::class.java).findAll()
+        val dataList = realmDb.copyFromRealm(results)
+        realmDb.close()
+        return dataList
     }
 
-    private fun callWeatherAPI() {
-        // Show the loading indicator when the API call starts
-        binding.swipeRefreshLayout.isRefreshing = true
-
+    private fun handleWeatherAPIResponse() {
         // Observe weather data
         lifecycleScope.launch {
             weatherViewModel.weatherData.collect { result ->
@@ -184,8 +180,10 @@ class HomeScreenFragment : Fragment() {
                         minTemp = result.data.main.temp_min.toString()
                         sunRiseTime = result.data.sys.sunrise.toString()
                         sunSetTime = result.data.sys.sunset.toString()
+                        humidity = result.data.main.humidity.toString()
+                        windSpeed = result.data.wind.speed.toString()
 
-                        saveDataToRealm(
+                        saveWeatherDataToRealm(
                             result.data.name, result.data.main.temp, result.data.main.temp_max,
                             result.data.main.temp_min, result.data.weather[0].icon
                         )
@@ -214,49 +212,38 @@ class HomeScreenFragment : Fragment() {
                                         }
 
                                         setDataInRecyclerView(hourlyItems)
-                                        saveHourlyWeatherData(hourlyItems)
-
-                                        // Hide the refresh indicator once data is loaded
-                                        binding.swipeRefreshLayout.isRefreshing = false
+                                        saveHourlyWeatherDataToRealm(hourlyItems)
                                     }
 
                                     is ApiResult.Error -> {
                                         binding.progressBar.visibility = View.GONE
                                         // Handle error for hourly data
-                                        Toast.makeText(
+                                        DialogUtils.showErrorDialog(
                                             requireContext(),
-                                            "Error loading hourly data",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        // Hide the refresh indicator in case of error
-                                        binding.swipeRefreshLayout.isRefreshing = false
+                                            hourlyResult.exception.message.toString()
+                                        )
                                     }
 
                                     null -> {
                                         binding.progressBar.visibility = View.GONE
-                                        // Handle null case for hourly data
-                                        binding.swipeRefreshLayout.isRefreshing = false
                                     }
                                 }
                             }
                         }
-                        // Hide the refresh indicator once weather data is loaded
-                        binding.swipeRefreshLayout.isRefreshing = false
                     }
 
                     is ApiResult.Error -> {
                         binding.progressBar.visibility = View.GONE
-                        Toast.makeText(
+                        DialogUtils.showErrorDialog(
                             requireContext(),
-                            "Error loading weather data",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        binding.swipeRefreshLayout.isRefreshing = false
+                            result.exception.message.toString()
+                        )
+
                     }
 
                     null -> {
                         binding.progressBar.visibility = View.GONE
-                        binding.swipeRefreshLayout.isRefreshing = false
+
                     }
                 }
             }
@@ -264,7 +251,6 @@ class HomeScreenFragment : Fragment() {
     }
 
     private fun setDataInRecyclerView(hourlyItems: List<HourlyWeatherItem>) {
-
         binding.rvTodayWeather.layoutManager = LinearLayoutManager(
             context,
             LinearLayoutManager.HORIZONTAL,
@@ -274,7 +260,7 @@ class HomeScreenFragment : Fragment() {
         binding.rvTodayWeather.adapter = hourlyWeatherAdapter
     }
 
-    private fun saveDataToRealm(
+    private fun saveWeatherDataToRealm(
         cityName: String,
         temp: Double,
         maxTemp: Double,
@@ -283,7 +269,7 @@ class HomeScreenFragment : Fragment() {
     ) {
 
         CoroutineScope(Dispatchers.IO).launch {
-            var weatherDetail = RealmModel().apply {
+            var weatherDetail = WeatherDataRealmModel().apply {
                 id = 1
                 name = cityName
                 temperature = temp
@@ -292,29 +278,29 @@ class HomeScreenFragment : Fragment() {
                 weatherStatusIcon = icon
             }
 
-            var realmDb = Realm.getDefaultInstance() // get default Instance
+            var realmDb = Realm.getDefaultInstance()
             realmDb.beginTransaction()
-            realmDb.copyToRealmOrUpdate(weatherDetail) // insert or update the data
+            realmDb.copyToRealmOrUpdate(weatherDetail)
             realmDb.commitTransaction()
-            realmDb.close() // You need to close the database instance once the transaction done
+            realmDb.close()
         }
 
 
     }
 
-    private fun saveHourlyWeatherData(hourlyData: List<HourlyWeatherItem>) {
+    private fun saveHourlyWeatherDataToRealm(hourlyData: List<HourlyWeatherItem>) {
         CoroutineScope(Dispatchers.IO).launch {
             val realmDb = Realm.getDefaultInstance()
             realmDb.beginTransaction()
 
             hourlyData.forEachIndexed { index, item ->
                 val weatherDetail = HourlyWeatherRealmModel().apply {
-                    id = index // Ensure unique IDs
+                    id = index
                     time = item.time
                     temperature = item.temperature
                     weatherStatusIcon = item.icon
                 }
-                realmDb.copyToRealmOrUpdate(weatherDetail) // Insert or update
+                realmDb.copyToRealmOrUpdate(weatherDetail)
             }
 
             realmDb.commitTransaction()
@@ -341,5 +327,6 @@ class HomeScreenFragment : Fragment() {
         // Set the binding to null to avoid memory leaks
         _binding = null
     }
+
 }
 

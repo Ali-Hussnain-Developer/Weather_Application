@@ -2,9 +2,9 @@ package com.example.arrivyfirsttask.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.arrivyfirsttask.classes.data.HourlyWeatherResponse
-import com.example.arrivyfirsttask.classes.data.WeatherResponse
-import com.example.arrivyfirsttask.classes.sealed.ApiResult
+import com.example.arrivyfirsttask.model.remote.HourlyWeatherResponse
+import com.example.arrivyfirsttask.model.remote.WeatherResponse
+import com.example.arrivyfirsttask.sealed.ApiResult
 import com.example.arrivyfirsttask.model.repository.WeatherRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

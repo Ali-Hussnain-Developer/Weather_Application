@@ -1,4 +1,4 @@
-package com.example.arrivyfirsttask
+package com.example.arrivyfirsttask.model.local
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
 

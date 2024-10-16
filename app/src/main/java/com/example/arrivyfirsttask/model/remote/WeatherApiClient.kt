@@ -1,6 +1,6 @@
-package com.example.arrivyfirsttask.model.api
+package com.example.arrivyfirsttask.model.remote
 
-import com.example.arrivyfirsttask.classes.constants.Constants
+import com.example.arrivyfirsttask.constants.Constants
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 

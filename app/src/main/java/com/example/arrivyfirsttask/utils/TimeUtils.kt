@@ -1,4 +1,4 @@
-package com.example.arrivyfirsttask.classes.utils
+package com.example.arrivyfirsttask.utils
 
 import java.text.SimpleDateFormat
 import java.time.Instant

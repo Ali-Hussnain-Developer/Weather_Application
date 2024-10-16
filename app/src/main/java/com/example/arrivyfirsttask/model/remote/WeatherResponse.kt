@@ -1,4 +1,4 @@
-package com.example.arrivyfirsttask.classes.data
+package com.example.arrivyfirsttask.model.remote
 
 // WeatherResponse.kt
 data class WeatherResponse(

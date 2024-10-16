@@ -1,8 +1,6 @@
-package com.example.arrivyfirsttask.model.api
+package com.example.arrivyfirsttask.model.remote
 
 
-import com.example.arrivyfirsttask.classes.data.HourlyWeatherResponse
-import com.example.arrivyfirsttask.classes.data.WeatherResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 
