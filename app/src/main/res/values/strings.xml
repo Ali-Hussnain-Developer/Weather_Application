@@ -18,4 +18,6 @@
     <string name="sunset">SunSet:</string>
     <string name="_6_30_am">6:30 AM</string>
     <string name="_7_00_pm">7:00 PM</string>
+    <string name="no_internet">No internet connection</string>
+    <string name="enter_city_name">Please Enter city Name</string>
 </resources>
