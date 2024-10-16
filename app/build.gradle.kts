@@ -1,7 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    kotlin("kapt")
+    id ("realm-android")
 }
+
 
 android {
     namespace = "com.example.arrivyfirsttask"
@@ -73,5 +76,8 @@ dependencies {
 
 //Glide
     implementation(libs.glide)
+//Realm
+        implementation("io.realm:realm-android-library:10.15.1")
+
 
 }

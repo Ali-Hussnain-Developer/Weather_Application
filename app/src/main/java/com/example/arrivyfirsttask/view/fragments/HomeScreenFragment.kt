@@ -2,6 +2,7 @@ package com.example.arrivyfirsttask.view.fragments
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +13,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.example.arrivyfirsttask.R
+import com.example.arrivyfirsttask.RealmModel
 import com.example.arrivyfirsttask.adapter.HourlyWeatherAdapter
 import com.example.arrivyfirsttask.classes.data.HourlyWeatherItem
 import com.example.arrivyfirsttask.classes.data.WeatherResponse
@@ -24,12 +26,17 @@ import com.example.arrivyfirsttask.databinding.FragmentHomeScreenBinding
 import com.example.arrivyfirsttask.model.api.WeatherApiClient
 import com.example.arrivyfirsttask.model.repository.WeatherRepository
 import com.example.arrivyfirsttask.viewModel.WeatherViewModel
+import io.realm.Realm
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class HomeScreenFragment : Fragment() {
     private var _binding: FragmentHomeScreenBinding? = null
     private val binding get() = _binding!!
     private lateinit var weatherViewModel: WeatherViewModel
+  //  private var weatherRepository=WeatherRealmRepository()
     private var cityName:String?=null
     private var maxTemp:String?=null
     private var minTemp:String?=null
@@ -97,10 +104,36 @@ class HomeScreenFragment : Fragment() {
         if (NetworkUtil.isInternetAvailable(requireContext())) {
             callWeatherAPI()
         } else {
+            callRealmData()
             Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT).show()
         }
     }
 
+    @SuppressLint("SetTextI18n")
+    private fun callRealmData() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val data = retrieveData()
+            if (data.isNotEmpty()) {
+                val realmModel = data[0]
+                withContext(Dispatchers.Main) {
+                    binding.tvCityName.text = realmModel.name
+                    binding.tvTemperature.text = realmModel.temperature.toString()
+                }
+            }
+            else{
+                Log.d("fetchData", "No data found in Realm")
+            }
+            Log.d("fetchData", "Retrieved data: $data")
+        }
+
+    }
+    private fun retrieveData(): List<RealmModel> {
+        var realmDb = Realm.getDefaultInstance()
+        val results: List<RealmModel> = realmDb.where(RealmModel::class.java).findAll()
+        val dataList = realmDb.copyFromRealm(results)
+        realmDb.close()
+        return dataList
+    }
     private fun callWeatherAPI() {
         weatherViewModel = WeatherViewModel(WeatherRepository(WeatherApiClient.instance))
 
@@ -126,6 +159,8 @@ class HomeScreenFragment : Fragment() {
                         minTemp=result.data.main.temp_min.toString()
                         sunRiseTime=result.data.sys.sunrise.toString()
                         sunSetTime=result.data.sys.sunset.toString()
+
+                        saveDataToRealm(cityName!!,result.data.main.temp)
 
                         weatherViewModel.fetchHourlyWeatherData(latitude!!, longitude!!)
 
@@ -199,7 +234,24 @@ class HomeScreenFragment : Fragment() {
         }
     }
 
+    private  fun saveDataToRealm(cityName: String, temp: Double) {
 
+        CoroutineScope(Dispatchers.IO).launch {
+            var weatherDetail = RealmModel().apply {
+                id=1
+                name = cityName
+                temperature = temp
+            }
+
+            var realmDb = Realm.getDefaultInstance() // get default Instance
+            realmDb.beginTransaction()
+            realmDb.copyToRealmOrUpdate(weatherDetail) // insert or update the data
+            realmDb.commitTransaction()
+            realmDb.close() // You need to close the database instance once the transaction done
+        }
+
+
+    }
 
     @SuppressLint("SetTextI18n")
     private fun setWeatherData(data: WeatherResponse) {
