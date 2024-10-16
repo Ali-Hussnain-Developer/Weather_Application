@@ -8,7 +8,11 @@ open class RealmModel : RealmObject(){
     var id: Int = 0
     var name: String = ""
     var temperature: Double = 0.0
+    var maxTemperature: Double = 0.0
+    var minTemperature: Double = 0.0
+    var weatherStatusIcon: String = ""
+
     override fun toString(): String {
-        return "RealmModel(id=$id, name='$name', temperature=$temperature)"
+        return "RealmModel(id=$id, name='$name', temperature=$temperature, maxTemperature=$maxTemperature, minTemperature=$minTemperature, weatherStatusIcon='$weatherStatusIcon')"
     }
 }

@@ -11,7 +11,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.bumptech.glide.Glide
 import com.example.arrivyfirsttask.R
 import com.example.arrivyfirsttask.RealmModel
 import com.example.arrivyfirsttask.adapter.HourlyWeatherAdapter
@@ -19,6 +18,7 @@ import com.example.arrivyfirsttask.classes.data.HourlyWeatherItem
 import com.example.arrivyfirsttask.classes.data.WeatherResponse
 import com.example.arrivyfirsttask.classes.sealed.ApiResult
 import com.example.arrivyfirsttask.classes.utils.DateUtils
+import com.example.arrivyfirsttask.classes.utils.ImageUtils
 import com.example.arrivyfirsttask.classes.utils.KeyBoardUtils.hideKeyboard
 import com.example.arrivyfirsttask.classes.utils.NetworkUtil
 import com.example.arrivyfirsttask.classes.utils.TimeUtils
@@ -36,7 +36,6 @@ class HomeScreenFragment : Fragment() {
     private var _binding: FragmentHomeScreenBinding? = null
     private val binding get() = _binding!!
     private lateinit var weatherViewModel: WeatherViewModel
-  //  private var weatherRepository=WeatherRealmRepository()
     private var cityName:String?=null
     private var maxTemp:String?=null
     private var minTemp:String?=null
@@ -44,6 +43,9 @@ class HomeScreenFragment : Fragment() {
     private var sunSetTime:String?=null
     private var latitude:Double?=null
     private var longitude:Double?=null
+
+
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -58,7 +60,8 @@ class HomeScreenFragment : Fragment() {
     }
 
     private fun init() {
-        checkInternetConnection()
+        weatherViewModel = WeatherViewModel(WeatherRepository(WeatherApiClient.instance))
+        callRealmData()
         setUpListeners()
         setTodayDate()
     }
@@ -69,13 +72,18 @@ class HomeScreenFragment : Fragment() {
 
     private fun setUpListeners() {
         binding.swipeRefreshLayout.setOnRefreshListener {
-            checkInternetConnection()
+            callRealmData()
         }
         binding.btnSearchCity.setOnClickListener {
             val city = binding.EdtCityName.text.toString().trim()
             if (city.isNotEmpty()) {
+                if (NetworkUtil.isInternetAvailable(requireContext())) {
                 weatherViewModel.fetchWeatherByCity(city)
                 activity?.hideKeyboard()
+                callWeatherAPI()
+                } else {
+                    Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT).show()
+                }
             }
             else{
                 Toast.makeText(requireContext(),"Please Enter city Name",Toast.LENGTH_SHORT).show()
@@ -94,30 +102,22 @@ class HomeScreenFragment : Fragment() {
             putString("minTemp",minTemp)
             putString("sunRiseTime",sunRiseTime)
             putString("sunSetTime",sunSetTime)
-            latitude?.let { putDouble("latitude", it) }
-            longitude?.let { putDouble("longitude", it) }
         }
         findNavController().navigate(R.id.action_homeScreenFragment_to_detailScreenFragment, bundle)
-    }
-
-    private fun checkInternetConnection() {
-        if (NetworkUtil.isInternetAvailable(requireContext())) {
-            callWeatherAPI()
-        } else {
-            callRealmData()
-            Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT).show()
-        }
     }
 
     @SuppressLint("SetTextI18n")
     private fun callRealmData() {
         CoroutineScope(Dispatchers.IO).launch {
-            val data = retrieveData()
+            val data = retrieveDataFromRealm()
             if (data.isNotEmpty()) {
                 val realmModel = data[0]
                 withContext(Dispatchers.Main) {
                     binding.tvCityName.text = realmModel.name
-                    binding.tvTemperature.text = realmModel.temperature.toString()
+                    binding.tvTemperature.text = "${realmModel.temperature}°C"
+                    binding.tvMaxTemp.text = "Max: ${realmModel.maxTemperature}°C "
+                    binding.tvMinTemp.text = "Min: ${realmModel.minTemperature}°C"
+                    ImageUtils.loadWeatherIcon(requireContext(),realmModel.weatherStatusIcon,binding.ivWeatherStatusIcon)
                 }
             }
             else{
@@ -127,7 +127,7 @@ class HomeScreenFragment : Fragment() {
         }
 
     }
-    private fun retrieveData(): List<RealmModel> {
+    private fun retrieveDataFromRealm(): List<RealmModel> {
         var realmDb = Realm.getDefaultInstance()
         val results: List<RealmModel> = realmDb.where(RealmModel::class.java).findAll()
         val dataList = realmDb.copyFromRealm(results)
@@ -135,8 +135,6 @@ class HomeScreenFragment : Fragment() {
         return dataList
     }
     private fun callWeatherAPI() {
-        weatherViewModel = WeatherViewModel(WeatherRepository(WeatherApiClient.instance))
-
         // Show the loading indicator when the API call starts
         binding.swipeRefreshLayout.isRefreshing = true
 
@@ -160,7 +158,8 @@ class HomeScreenFragment : Fragment() {
                         sunRiseTime=result.data.sys.sunrise.toString()
                         sunSetTime=result.data.sys.sunset.toString()
 
-                        saveDataToRealm(cityName!!,result.data.main.temp)
+                        saveDataToRealm(result.data.name,result.data.main.temp, result.data.main.temp_max,
+                            result.data.main.temp_min,result.data.weather[0].icon)
 
                         weatherViewModel.fetchHourlyWeatherData(latitude!!, longitude!!)
 
@@ -234,13 +233,22 @@ class HomeScreenFragment : Fragment() {
         }
     }
 
-    private  fun saveDataToRealm(cityName: String, temp: Double) {
+    private  fun saveDataToRealm(
+        cityName: String,
+        temp: Double,
+        maxTemp: Double,
+        minTemp: Double,
+        icon: String
+    ) {
 
         CoroutineScope(Dispatchers.IO).launch {
             var weatherDetail = RealmModel().apply {
                 id=1
                 name = cityName
                 temperature = temp
+                maxTemperature=maxTemp
+                minTemperature=minTemp
+                weatherStatusIcon=icon
             }
 
             var realmDb = Realm.getDefaultInstance() // get default Instance
@@ -259,16 +267,10 @@ class HomeScreenFragment : Fragment() {
         binding.tvCityName.text = data.name
         binding.tvMaxTemp.text = "Max: ${data.main.temp_max}°C "
         binding.tvMinTemp.text = "Min: ${data.main.temp_min}°C"
-        loadWeatherIcon(data.weather[0].icon)
+        ImageUtils.loadWeatherIcon(requireContext(),data.weather[0].icon,binding.ivWeatherStatusIcon)
     }
 
-    private fun loadWeatherIcon(icon: String) {
-        // Construct the URL for the weather icon
-        val iconUrl = "https://openweathermap.org/img/wn/$icon@2x.png"
-        Glide.with(this)
-            .load(iconUrl)
-            .into(binding.ivWeatherStatusIcon)
-    }
+
 
     override fun onDestroyView() {
         super.onDestroyView()

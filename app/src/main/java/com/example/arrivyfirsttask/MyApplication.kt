@@ -9,7 +9,7 @@ class MyApplication : Application() {
         super.onCreate()
         Realm.init(this)
         val config = RealmConfiguration.Builder()
-            .name("Myrealm.realm")
+            .name("Weather.realm")
             .allowWritesOnUiThread(false)
             .allowQueriesOnUiThread(false)
             .schemaVersion(4)
