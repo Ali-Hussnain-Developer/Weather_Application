@@ -1,16 +1,12 @@
 package com.example.arrivyfirsttask.view.fragments
 
 import android.os.Bundle
-import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.bumptech.glide.Glide.init
-import com.example.arrivyfirsttask.R
+import androidx.fragment.app.Fragment
 import com.example.arrivyfirsttask.classes.utils.TimeUtils
 import com.example.arrivyfirsttask.databinding.FragmentDetailScreenBinding
-import com.example.arrivyfirsttask.databinding.FragmentHomeScreenBinding
 
 class DetailScreenFragment : Fragment() {
     private var _binding: FragmentDetailScreenBinding? = null
@@ -42,8 +38,10 @@ class DetailScreenFragment : Fragment() {
         binding.tvMaxTemp.text = "Max: $maxTemp °"
         binding.tvMinTemp.text = "Min: $minTemp °"
         binding.tvCityName.text = cityName
-        binding.tvSunSetTime.text = "${sunSetTime?.let { TimeUtils.convertUnixToTime(it.toLong()) }} PM"
-        binding.tvSunRiseTime.text = "${sunRiseTime?.let { TimeUtils.convertUnixToTime(it.toLong()) }} AM"
+        binding.tvSunSetTime.text =
+            "${sunSetTime?.let { TimeUtils.convertUnixToTime(it.toLong()) }} PM"
+        binding.tvSunRiseTime.text =
+            "${sunRiseTime?.let { TimeUtils.convertUnixToTime(it.toLong()) }} AM"
     }
 
     private fun receiveDataFromHomeScreen() {

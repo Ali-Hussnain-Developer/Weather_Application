@@ -85,3 +85,4 @@ data class HourlyWeatherItem(
     val temperature: String,
     val icon: String
 )
+

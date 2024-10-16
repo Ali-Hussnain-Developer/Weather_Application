@@ -87,6 +87,8 @@ class HomeScreenFragment : Fragment() {
             putString("minTemp",minTemp)
             putString("sunRiseTime",sunRiseTime)
             putString("sunSetTime",sunSetTime)
+            latitude?.let { putDouble("latitude", it) }
+            longitude?.let { putDouble("longitude", it) }
         }
         findNavController().navigate(R.id.action_homeScreenFragment_to_detailScreenFragment, bundle)
     }
