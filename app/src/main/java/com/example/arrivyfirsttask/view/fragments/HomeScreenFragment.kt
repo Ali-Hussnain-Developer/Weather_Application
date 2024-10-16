@@ -1,10 +1,7 @@
 package com.example.arrivyfirsttask.view.fragments
 
 import android.annotation.SuppressLint
-import android.app.AlertDialog
-import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -41,16 +38,6 @@ class HomeScreenFragment : Fragment() {
     private var _binding: FragmentHomeScreenBinding? = null
     private val binding get() = _binding!!
     private lateinit var weatherViewModel: WeatherViewModel
-    private var cityName: String? = null
-    private var maxTemp: String? = null
-    private var minTemp: String? = null
-    private var sunRiseTime: String? = null
-    private var sunSetTime: String? = null
-    private var latitude: Double? = null
-    private var longitude: Double? = null
-    private var humidity: String? = null
-    private var windSpeed: String? = null
-
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -94,25 +81,13 @@ class HomeScreenFragment : Fragment() {
             }
         }
         binding.layoutHourlyWeather.setOnClickListener {
-            if (cityName != null) {
-                senDataToWeatherDetailScreen()
-            }
-
+            moveToWeatherDetailScreen()
         }
 
     }
 
-    private fun senDataToWeatherDetailScreen() {
-        val bundle = Bundle().apply {
-            putString("cityName", cityName)
-            putString("maxTemp", maxTemp)
-            putString("minTemp", minTemp)
-            putString("sunRiseTime", sunRiseTime)
-            putString("sunSetTime", sunSetTime)
-            putString("humidity", humidity)
-            putString("windSpeed", windSpeed)
-        }
-        findNavController().navigate(R.id.action_homeScreenFragment_to_detailScreenFragment, bundle)
+    private fun moveToWeatherDetailScreen() {
+        findNavController().navigate(R.id.action_homeScreenFragment_to_detailScreenFragment)
     }
 
     @SuppressLint("SetTextI18n")
@@ -135,8 +110,6 @@ class HomeScreenFragment : Fragment() {
                     val hourlyWeatherItems = ListUtils.convertToHourlyWeatherItem(hourlyWeatherData)
                     setDataInRecyclerView(hourlyWeatherItems)
                 }
-            } else {
-                binding.tvCityName.text = "Search Some City"
             }
         }
     }
@@ -172,23 +145,22 @@ class HomeScreenFragment : Fragment() {
                     is ApiResult.Success -> {
                         binding.progressBar.visibility = View.GONE
                         setWeatherData(result.data)
-
-                        latitude = result.data.coord.lat
-                        longitude = result.data.coord.lon
-                        cityName = result.data.name
-                        maxTemp = result.data.main.temp_max.toString()
-                        minTemp = result.data.main.temp_min.toString()
-                        sunRiseTime = result.data.sys.sunrise.toString()
-                        sunSetTime = result.data.sys.sunset.toString()
-                        humidity = result.data.main.humidity.toString()
-                        windSpeed = result.data.wind.speed.toString()
-
                         saveWeatherDataToRealm(
-                            result.data.name, result.data.main.temp, result.data.main.temp_max,
-                            result.data.main.temp_min, result.data.weather[0].icon
+                            result.data.name,
+                            result.data.main.temp,
+                            result.data.main.temp_max,
+                            result.data.main.temp_min,
+                            result.data.weather[0].icon,
+                            result.data.sys.sunrise,
+                            result.data.sys.sunset,
+                            result.data.main.humidity,
+                            result.data.wind.speed
                         )
 
-                        weatherViewModel.fetchHourlyWeatherData(latitude!!, longitude!!)
+                        weatherViewModel.fetchHourlyWeatherData(
+                            result.data.coord.lat,
+                            result.data.coord.lon
+                        )
 
                         // Collect hourly weather data in a separate coroutine
                         launch {
@@ -250,22 +222,17 @@ class HomeScreenFragment : Fragment() {
         }
     }
 
-    private fun setDataInRecyclerView(hourlyItems: List<HourlyWeatherItem>) {
-        binding.rvTodayWeather.layoutManager = LinearLayoutManager(
-            context,
-            LinearLayoutManager.HORIZONTAL,
-            false
-        )
-        val hourlyWeatherAdapter = HourlyWeatherAdapter(hourlyItems)
-        binding.rvTodayWeather.adapter = hourlyWeatherAdapter
-    }
 
     private fun saveWeatherDataToRealm(
         cityName: String,
         temp: Double,
         maxTemp: Double,
         minTemp: Double,
-        icon: String
+        icon: String,
+        sunrise: Long,
+        sunset: Long,
+        humidity: Int,
+        speed: Double
     ) {
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -276,6 +243,10 @@ class HomeScreenFragment : Fragment() {
                 maxTemperature = maxTemp
                 minTemperature = minTemp
                 weatherStatusIcon = icon
+                weatherHumidity = humidity
+                windSpeed = speed
+                sunRiseTime = sunrise
+                sunSetTime = sunset
             }
 
             var realmDb = Realm.getDefaultInstance()
@@ -319,6 +290,16 @@ class HomeScreenFragment : Fragment() {
             data.weather[0].icon,
             binding.ivWeatherStatusIcon
         )
+    }
+
+    private fun setDataInRecyclerView(hourlyItems: List<HourlyWeatherItem>) {
+        binding.rvTodayWeather.layoutManager = LinearLayoutManager(
+            context,
+            LinearLayoutManager.HORIZONTAL,
+            false
+        )
+        val hourlyWeatherAdapter = HourlyWeatherAdapter(hourlyItems)
+        binding.rvTodayWeather.adapter = hourlyWeatherAdapter
     }
 
 

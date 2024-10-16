@@ -6,19 +6,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.example.arrivyfirsttask.utils.TimeUtils
 import com.example.arrivyfirsttask.databinding.FragmentDetailScreenBinding
+import com.example.arrivyfirsttask.model.local.WeatherDataRealmModel
+import com.example.arrivyfirsttask.utils.TimeUtils
+import io.realm.Realm
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class DetailScreenFragment : Fragment() {
     private var _binding: FragmentDetailScreenBinding? = null
     private val binding get() = _binding!!
-    private var cityName: String? = null
-    private var maxTemp: String? = null
-    private var minTemp: String? = null
-    private var sunRiseTime: String? = null
-    private var sunSetTime: String? = null
-    private var humidity: String? = null
-    private var windSpeed: String? = null
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -33,31 +32,39 @@ class DetailScreenFragment : Fragment() {
     }
 
     private fun init() {
-        receiveDataFromHomeScreen()
-        setWeatherData()
+        callRealmData()
     }
 
     @SuppressLint("SetTextI18n")
-    private fun setWeatherData() {
-        binding.tvMaxTemp.text = "Max: $maxTemp °"
-        binding.tvMinTemp.text = "Min: $minTemp °"
-        binding.tvCityName.text = cityName
-        binding.tvSunSetTime.text =
-            "${sunSetTime?.let { TimeUtils.convertUnixToTime(it.toLong()) }} PM"
-        binding.tvSunRiseTime.text =
-            "${sunRiseTime?.let { TimeUtils.convertUnixToTime(it.toLong()) }} AM"
-        binding.tvWindSpeedValue.text = windSpeed
-        binding.tvHumidityValue.text = humidity
+    private fun callRealmData() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val data = retrieveWeatherDataFromRealm()
+            if (data.isNotEmpty()) {
+                val realmModel = data[0]
+                withContext(Dispatchers.Main) {
+                    binding.tvCityName.text = realmModel.name
+                    binding.tvMaxTemp.text = "Max: ${realmModel.maxTemperature}°C "
+                    binding.tvMinTemp.text = "Min: ${realmModel.minTemperature}°C"
+                    binding.tvHumidityValue.text = realmModel.weatherHumidity.toString()
+                    binding.tvWindSpeedValue.text = realmModel.windSpeed.toString()
+                    binding.tvSunSetTime.text =
+                        "${TimeUtils.convertUnixToTime(realmModel.sunSetTime)} PM"
+                    binding.tvSunRiseTime.text =
+                        "${TimeUtils.convertUnixToTime(realmModel.sunRiseTime)} AM"
+
+
+                }
+            }
+        }
     }
 
-    private fun receiveDataFromHomeScreen() {
-        cityName = arguments?.getString("cityName")
-        maxTemp = arguments?.getString("maxTemp")
-        minTemp = arguments?.getString("minTemp")
-        sunRiseTime = arguments?.getString("sunRiseTime")
-        sunSetTime = arguments?.getString("sunSetTime")
-        humidity = arguments?.getString("humidity")
-        windSpeed = arguments?.getString("windSpeed")
+    private fun retrieveWeatherDataFromRealm(): List<WeatherDataRealmModel> {
+        var realmDb = Realm.getDefaultInstance()
+        val results: List<WeatherDataRealmModel> =
+            realmDb.where(WeatherDataRealmModel::class.java).findAll()
+        val dataList = realmDb.copyFromRealm(results)
+        realmDb.close()
+        return dataList
     }
 
     override fun onDestroyView() {

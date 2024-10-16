@@ -9,24 +9,25 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-       >
+        android:layout_height="wrap_content">
 
-        <RelativeLayout
+        <!-- Search City Layout -->
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/layoutSearchCity"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="50dp"
             android:layout_marginHorizontal="15dp"
             android:layout_marginTop="15dp"
             android:background="@drawable/rounded_corners"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintEnd_toEndOf="parent">
 
             <EditText
                 android:id="@+id/EdtCityName"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="10dp"
                 android:background="@null"
                 android:hint="@string/enter_city"
                 android:inputType="text"
@@ -34,23 +35,23 @@
                 android:textColor="@color/white"
                 android:textColorHint="@color/white"
                 android:textSize="17sp"
-                tools:ignore="Autofill,RtlSymmetry" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/btnSearchCity" />
 
             <ImageView
                 android:id="@+id/btnSearchCity"
                 android:layout_width="30dp"
-                android:layout_height="50dp"
-                android:layout_alignParentEnd="true"
+                android:layout_height="match_parent"
                 android:layout_marginEnd="10dp"
                 android:src="@drawable/baseline_search_24"
+                app:layout_constraintEnd_toEndOf="parent"
                 tools:ignore="ContentDescription" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-
-        </RelativeLayout>
-
+        <!-- City Name -->
         <TextView
             android:id="@+id/tvCityName"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginVertical="20dp"
             android:gravity="center"
@@ -58,12 +59,11 @@
             android:textColor="@color/white"
             android:textSize="40sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/layoutSearchCity"
-            tools:ignore="ContentDescription" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-
+        <!-- Temperature -->
         <TextView
             android:id="@+id/tvTemperature"
             android:layout_width="wrap_content"
@@ -72,10 +72,11 @@
             android:textColor="@color/white"
             android:textSize="40sp"
             android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvCityName"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvCityName" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
+        <!-- Precipitations -->
         <TextView
             android:id="@+id/tvPrecipitations"
             android:layout_width="wrap_content"
@@ -83,9 +84,17 @@
             android:text="@string/precipitations"
             android:textColor="@color/white"
             android:textSize="20sp"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvTemperature"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvTemperature" />
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <!-- Max and Min Temperatures -->
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintGuide_percent="0.5"
+            android:orientation="vertical" />
 
         <TextView
             android:id="@+id/tvMaxTemp"
@@ -94,16 +103,8 @@
             android:layout_marginTop="10dp"
             android:textColor="@color/white"
             android:textSize="20sp"
-            app:layout_constraintEnd_toStartOf="@+id/vSpace"
-            app:layout_constraintTop_toBottomOf="@+id/tvPrecipitations" />
-
-        <View
-            android:id="@+id/vSpace"
-            android:layout_width="20dp"
-            android:layout_height="10dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvPrecipitations" />
+            app:layout_constraintTop_toBottomOf="@+id/tvPrecipitations"
+            app:layout_constraintEnd_toStartOf="@+id/guideline" />
 
         <TextView
             android:id="@+id/tvMinTemp"
@@ -112,9 +113,10 @@
             android:layout_marginTop="10dp"
             android:textColor="@color/white"
             android:textSize="20sp"
-            app:layout_constraintStart_toEndOf="@+id/vSpace"
-            app:layout_constraintTop_toBottomOf="@+id/tvPrecipitations" />
+            app:layout_constraintTop_toBottomOf="@+id/tvPrecipitations"
+            app:layout_constraintStart_toEndOf="@+id/guideline" />
 
+        <!-- Weather Icon -->
         <ImageView
             android:id="@+id/ivWeatherStatusIcon"
             android:layout_width="200dp"
@@ -122,35 +124,38 @@
             android:layout_marginTop="30dp"
             android:scaleType="centerCrop"
             android:src="@drawable/weather_icon"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvMinTemp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/vSpace"
+            app:layout_constraintEnd_toEndOf="parent"
             tools:ignore="ContentDescription" />
+
+        <!-- ProgressBar -->
         <ProgressBar
+            android:id="@+id/progressBar"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:id="@+id/progressBar"
+            android:visibility="gone"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:visibility="gone"/>
+            app:layout_constraintBottom_toBottomOf="parent" />
 
+        <!-- Hourly Weather -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="5dp"
             app:cardCornerRadius="20dp"
             app:cardElevation="20dp"
-            android:layout_marginVertical="5dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ivWeatherStatusIcon"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ivWeatherStatusIcon">
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/layoutHourlyWeather"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:background="@drawable/splash_background_gradient"
                 android:paddingTop="20dp">
 
@@ -183,27 +188,23 @@
                     android:layout_height="1dp"
                     android:layout_marginTop="10dp"
                     android:background="@color/white"
-                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tvTodayDate"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/tvTodayDate" />
+                    app:layout_constraintEnd_toEndOf="parent" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvTodayWeather"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:paddingVertical="30dp"
                     android:scrollbars="horizontal"
                     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/vHorizontalLine"
-                   />
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent" />
             </androidx.constraintlayout.widget.ConstraintLayout>
-
         </androidx.cardview.widget.CardView>
-
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
-

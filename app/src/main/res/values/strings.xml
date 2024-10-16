@@ -16,4 +16,6 @@
     <string name="lahore">Lahore</string>
     <string name="sunrise">SunRise</string>
     <string name="sunset">SunSet:</string>
+    <string name="_6_30_am">6:30 AM</string>
+    <string name="_7_00_pm">7:00 PM</string>
 </resources>
