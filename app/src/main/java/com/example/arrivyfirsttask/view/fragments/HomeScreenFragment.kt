@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.arrivyfirsttask.HourlyWeatherRealmModel
 import com.example.arrivyfirsttask.R
 import com.example.arrivyfirsttask.RealmModel
 import com.example.arrivyfirsttask.adapter.HourlyWeatherAdapter
@@ -36,14 +37,13 @@ class HomeScreenFragment : Fragment() {
     private var _binding: FragmentHomeScreenBinding? = null
     private val binding get() = _binding!!
     private lateinit var weatherViewModel: WeatherViewModel
-    private var cityName:String?=null
-    private var maxTemp:String?=null
-    private var minTemp:String?=null
-    private var sunRiseTime:String?=null
-    private var sunSetTime:String?=null
-    private var latitude:Double?=null
-    private var longitude:Double?=null
-
+    private var cityName: String? = null
+    private var maxTemp: String? = null
+    private var minTemp: String? = null
+    private var sunRiseTime: String? = null
+    private var sunSetTime: String? = null
+    private var latitude: Double? = null
+    private var longitude: Double? = null
 
 
     override fun onCreateView(
@@ -78,18 +78,19 @@ class HomeScreenFragment : Fragment() {
             val city = binding.EdtCityName.text.toString().trim()
             if (city.isNotEmpty()) {
                 if (NetworkUtil.isInternetAvailable(requireContext())) {
-                weatherViewModel.fetchWeatherByCity(city)
-                activity?.hideKeyboard()
-                callWeatherAPI()
+                    weatherViewModel.fetchWeatherByCity(city)
+                    activity?.hideKeyboard()
+                    callWeatherAPI()
                 } else {
-                    Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "No internet connection", Toast.LENGTH_SHORT)
+                        .show()
                 }
-            }
-            else{
-                Toast.makeText(requireContext(),"Please Enter city Name",Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), "Please Enter city Name", Toast.LENGTH_SHORT)
+                    .show()
             }
         }
-        binding.layoutHourlyWeather.setOnClickListener{
+        binding.layoutHourlyWeather.setOnClickListener {
             senDataToWeatherDetailScreen()
         }
 
@@ -97,11 +98,11 @@ class HomeScreenFragment : Fragment() {
 
     private fun senDataToWeatherDetailScreen() {
         val bundle = Bundle().apply {
-            putString("cityName",cityName)
-            putString("maxTemp",maxTemp)
-            putString("minTemp",minTemp)
-            putString("sunRiseTime",sunRiseTime)
-            putString("sunSetTime",sunSetTime)
+            putString("cityName", cityName)
+            putString("maxTemp", maxTemp)
+            putString("minTemp", minTemp)
+            putString("sunRiseTime", sunRiseTime)
+            putString("sunSetTime", sunSetTime)
         }
         findNavController().navigate(R.id.action_homeScreenFragment_to_detailScreenFragment, bundle)
     }
@@ -110,6 +111,7 @@ class HomeScreenFragment : Fragment() {
     private fun callRealmData() {
         CoroutineScope(Dispatchers.IO).launch {
             val data = retrieveDataFromRealm()
+            val hourlyWeatherData = retrieveHourlyWeatherData()
             if (data.isNotEmpty()) {
                 val realmModel = data[0]
                 withContext(Dispatchers.Main) {
@@ -117,15 +119,30 @@ class HomeScreenFragment : Fragment() {
                     binding.tvTemperature.text = "${realmModel.temperature}°C"
                     binding.tvMaxTemp.text = "Max: ${realmModel.maxTemperature}°C "
                     binding.tvMinTemp.text = "Min: ${realmModel.minTemperature}°C"
-                    ImageUtils.loadWeatherIcon(requireContext(),realmModel.weatherStatusIcon,binding.ivWeatherStatusIcon)
+                    ImageUtils.loadWeatherIcon(
+                        requireContext(),
+                        realmModel.weatherStatusIcon,
+                        binding.ivWeatherStatusIcon
+                    )
+                    val hourlyWeatherItems = convertToHourlyWeatherItem(hourlyWeatherData)
+                    setDataInRecyclerView(hourlyWeatherItems)
+                    Log.d("fetchData", "Retrieved data: $hourlyWeatherData")
                 }
-            }
-            else{
+            } else {
                 Log.d("fetchData", "No data found in Realm")
             }
             Log.d("fetchData", "Retrieved data: $data")
         }
+    }
 
+    private fun convertToHourlyWeatherItem(realmData: List<HourlyWeatherRealmModel>): List<HourlyWeatherItem> {
+        return realmData.map { realmItem ->
+            HourlyWeatherItem(
+                time = realmItem.time,
+                temperature = realmItem.temperature,
+                icon = realmItem.weatherStatusIcon
+            )
+        }
     }
     private fun retrieveDataFromRealm(): List<RealmModel> {
         var realmDb = Realm.getDefaultInstance()
@@ -134,6 +151,16 @@ class HomeScreenFragment : Fragment() {
         realmDb.close()
         return dataList
     }
+
+    private fun retrieveHourlyWeatherData(): List<HourlyWeatherRealmModel> {
+        val realmDb = Realm.getDefaultInstance() // Get default instance
+        val results =
+            realmDb.where(HourlyWeatherRealmModel::class.java).findAll() // Query all records
+        val dataList = realmDb.copyFromRealm(results) // Copy results to a detached list
+        realmDb.close() // Close the Realm instance
+        return dataList // Return the list
+    }
+
     private fun callWeatherAPI() {
         // Show the loading indicator when the API call starts
         binding.swipeRefreshLayout.isRefreshing = true
@@ -143,23 +170,25 @@ class HomeScreenFragment : Fragment() {
             weatherViewModel.weatherData.collect { result ->
                 when (result) {
                     is ApiResult.Loading -> {
-                       binding.progressBar.visibility=View.VISIBLE
+                        binding.progressBar.visibility = View.VISIBLE
                     }
 
                     is ApiResult.Success -> {
-                        binding.progressBar.visibility=View.GONE
+                        binding.progressBar.visibility = View.GONE
                         setWeatherData(result.data)
 
                         latitude = result.data.coord.lat
                         longitude = result.data.coord.lon
-                        cityName=result.data.name
-                        maxTemp=result.data.main.temp_max.toString()
-                        minTemp=result.data.main.temp_min.toString()
-                        sunRiseTime=result.data.sys.sunrise.toString()
-                        sunSetTime=result.data.sys.sunset.toString()
+                        cityName = result.data.name
+                        maxTemp = result.data.main.temp_max.toString()
+                        minTemp = result.data.main.temp_min.toString()
+                        sunRiseTime = result.data.sys.sunrise.toString()
+                        sunSetTime = result.data.sys.sunset.toString()
 
-                        saveDataToRealm(result.data.name,result.data.main.temp, result.data.main.temp_max,
-                            result.data.main.temp_min,result.data.weather[0].icon)
+                        saveDataToRealm(
+                            result.data.name, result.data.main.temp, result.data.main.temp_max,
+                            result.data.main.temp_min, result.data.weather[0].icon
+                        )
 
                         weatherViewModel.fetchHourlyWeatherData(latitude!!, longitude!!)
 
@@ -168,11 +197,11 @@ class HomeScreenFragment : Fragment() {
                             weatherViewModel.hourlyWeatherData.collect { hourlyResult ->
                                 when (hourlyResult) {
                                     is ApiResult.Loading -> {
-                                        binding.progressBar.visibility=View.VISIBLE
+                                        binding.progressBar.visibility = View.VISIBLE
                                     }
 
                                     is ApiResult.Success -> {
-                                        binding.progressBar.visibility=View.GONE
+                                        binding.progressBar.visibility = View.GONE
                                         // Update UI with hourly data
                                         val hourlyItems = hourlyResult.data.list.map { hourlyData ->
                                             val time =
@@ -184,30 +213,27 @@ class HomeScreenFragment : Fragment() {
                                             HourlyWeatherItem(time, temperature, icon)
                                         }
 
-                                        // Setup RecyclerView with the hourly weather data
-                                        binding.rvTodayWeather.layoutManager = LinearLayoutManager(
-                                            context,
-                                            LinearLayoutManager.HORIZONTAL,
-                                            false
-                                        )
-
-                                        val hourlyWeatherAdapter = HourlyWeatherAdapter(hourlyItems)
-                                        binding.rvTodayWeather.adapter = hourlyWeatherAdapter
+                                        setDataInRecyclerView(hourlyItems)
+                                        saveHourlyWeatherData(hourlyItems)
 
                                         // Hide the refresh indicator once data is loaded
                                         binding.swipeRefreshLayout.isRefreshing = false
                                     }
 
                                     is ApiResult.Error -> {
-                                        binding.progressBar.visibility=View.GONE
+                                        binding.progressBar.visibility = View.GONE
                                         // Handle error for hourly data
-                                        Toast.makeText(requireContext(), "Error loading hourly data", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Error loading hourly data",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                         // Hide the refresh indicator in case of error
                                         binding.swipeRefreshLayout.isRefreshing = false
                                     }
 
                                     null -> {
-                                        binding.progressBar.visibility=View.GONE
+                                        binding.progressBar.visibility = View.GONE
                                         // Handle null case for hourly data
                                         binding.swipeRefreshLayout.isRefreshing = false
                                     }
@@ -219,13 +245,17 @@ class HomeScreenFragment : Fragment() {
                     }
 
                     is ApiResult.Error -> {
-                        binding.progressBar.visibility=View.GONE
-                        Toast.makeText(requireContext(), "Error loading weather data", Toast.LENGTH_SHORT).show()
+                        binding.progressBar.visibility = View.GONE
+                        Toast.makeText(
+                            requireContext(),
+                            "Error loading weather data",
+                            Toast.LENGTH_SHORT
+                        ).show()
                         binding.swipeRefreshLayout.isRefreshing = false
                     }
 
                     null -> {
-                        binding.progressBar.visibility=View.GONE
+                        binding.progressBar.visibility = View.GONE
                         binding.swipeRefreshLayout.isRefreshing = false
                     }
                 }
@@ -233,7 +263,18 @@ class HomeScreenFragment : Fragment() {
         }
     }
 
-    private  fun saveDataToRealm(
+    private fun setDataInRecyclerView(hourlyItems: List<HourlyWeatherItem>) {
+
+        binding.rvTodayWeather.layoutManager = LinearLayoutManager(
+            context,
+            LinearLayoutManager.HORIZONTAL,
+            false
+        )
+        val hourlyWeatherAdapter = HourlyWeatherAdapter(hourlyItems)
+        binding.rvTodayWeather.adapter = hourlyWeatherAdapter
+    }
+
+    private fun saveDataToRealm(
         cityName: String,
         temp: Double,
         maxTemp: Double,
@@ -243,12 +284,12 @@ class HomeScreenFragment : Fragment() {
 
         CoroutineScope(Dispatchers.IO).launch {
             var weatherDetail = RealmModel().apply {
-                id=1
+                id = 1
                 name = cityName
                 temperature = temp
-                maxTemperature=maxTemp
-                minTemperature=minTemp
-                weatherStatusIcon=icon
+                maxTemperature = maxTemp
+                minTemperature = minTemp
+                weatherStatusIcon = icon
             }
 
             var realmDb = Realm.getDefaultInstance() // get default Instance
@@ -261,15 +302,38 @@ class HomeScreenFragment : Fragment() {
 
     }
 
+    private fun saveHourlyWeatherData(hourlyData: List<HourlyWeatherItem>) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val realmDb = Realm.getDefaultInstance()
+            realmDb.beginTransaction()
+
+            hourlyData.forEachIndexed { index, item ->
+                val weatherDetail = HourlyWeatherRealmModel().apply {
+                    id = index // Ensure unique IDs
+                    time = item.time
+                    temperature = item.temperature
+                    weatherStatusIcon = item.icon
+                }
+                realmDb.copyToRealmOrUpdate(weatherDetail) // Insert or update
+            }
+
+            realmDb.commitTransaction()
+            realmDb.close() // Close the Realm instance
+        }
+    }
+
     @SuppressLint("SetTextI18n")
     private fun setWeatherData(data: WeatherResponse) {
         binding.tvTemperature.text = "${data.main.temp}°C"
         binding.tvCityName.text = data.name
         binding.tvMaxTemp.text = "Max: ${data.main.temp_max}°C "
         binding.tvMinTemp.text = "Min: ${data.main.temp_min}°C"
-        ImageUtils.loadWeatherIcon(requireContext(),data.weather[0].icon,binding.ivWeatherStatusIcon)
+        ImageUtils.loadWeatherIcon(
+            requireContext(),
+            data.weather[0].icon,
+            binding.ivWeatherStatusIcon
+        )
     }
-
 
 
     override fun onDestroyView() {
@@ -278,3 +342,4 @@ class HomeScreenFragment : Fragment() {
         _binding = null
     }
 }
+
