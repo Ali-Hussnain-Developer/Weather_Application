@@ -17,15 +17,22 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() {
+
+    // StateFlow to handle weather data from the API
     private val _weatherData = MutableStateFlow<ApiResult<WeatherResponse>?>(null)
     val weatherData: StateFlow<ApiResult<WeatherResponse>?> = _weatherData
 
+    // StateFlow to handle hourly weather data from the API
     private val _hourlyWeatherData = MutableStateFlow<ApiResult<HourlyWeatherResponse>?>(null)
     val hourlyWeatherData: StateFlow<ApiResult<HourlyWeatherResponse>?> = _hourlyWeatherData
 
+    // LiveData to retrieve weather data stored in Realm
     val weatherDataRealm: LiveData<List<WeatherDataRealmModel>> = repository.getWeatherData()
+
+    // LiveData to retrieve hourly weather data stored in Realm
     val hourlyWeatherDataRealm: LiveData<List<HourlyWeatherRealmModel>> = repository.getHourlyWeatherData()
 
+    // Fetch weather data from the API based on city name
     fun fetchWeatherByCity(city: String) {
         viewModelScope.launch {
             repository.fetchWeatherByCity(city).collect { result ->
@@ -34,6 +41,7 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
         }
     }
 
+    // Fetch hourly weather data from the API based on coordinates (latitude, longitude)
     fun fetchHourlyWeatherData(latitude: Double, longitude: Double) {
         viewModelScope.launch {
             repository.fetchHourlyWeatherData(latitude, longitude).collect { result ->
@@ -42,21 +50,21 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
         }
     }
 
-
-
+    // Function to save weather data (single object) into Realm
     fun saveWeatherData(weatherData: WeatherDataRealmModel) {
-        // Perform Realm operations on IO thread
+        // Perform Realm operations on the IO thread for background execution
         viewModelScope.launch(Dispatchers.IO) {
-            val realmDb = Realm.getDefaultInstance() // Create Realm instance within the IO thread
+            val realmDb = Realm.getDefaultInstance() // Create Realm instance in the IO thread
             try {
+                // Execute the transaction to save data in Realm
                 realmDb.executeTransaction { realm ->
-                    // Perform write operation
                     realm.copyToRealmOrUpdate(weatherData)
                 }
             } catch (e: Exception) {
-                // Handle any exceptions
+                // Handle any potential exceptions (e.g., Realm errors)
+                e.printStackTrace()
             } finally {
-                // Close Realm instance on the same thread it was created
+                // Ensure the Realm instance is closed on the same thread it was opened
                 if (!realmDb.isClosed) {
                     realmDb.close()
                 }
@@ -64,34 +72,34 @@ class WeatherViewModel(private val repository: WeatherRepository) : ViewModel() 
         }
     }
 
-    // Function to save list of hourly weather data
-
+    // Function to save a list of hourly weather data into Realm
     fun saveHourlyWeatherData(hourlyData: List<HourlyWeatherItem>) {
-        // Perform Realm operations on IO thread
+        // Perform Realm operations on the IO thread for background execution
         viewModelScope.launch(Dispatchers.IO) {
-            val realmDb = Realm.getDefaultInstance()
+            val realmDb = Realm.getDefaultInstance() // Create Realm instance
             try {
+                // Execute the transaction to save list data in Realm
                 realmDb.executeTransaction { realm ->
                     hourlyData.forEachIndexed { index, item ->
-                        val weatherDetail = HourlyWeatherRealmModel().apply {
+                        val hourlyWeather = HourlyWeatherRealmModel().apply {
                             id = index
                             time = item.time
                             temperature = item.temperature
                             weatherStatusIcon = item.icon
                         }
-                        realm.copyToRealmOrUpdate(weatherDetail)
+                        realm.copyToRealmOrUpdate(hourlyWeather)
                     }
                 }
             } catch (e: Exception) {
-                // Handle any exceptions
+                // Handle any potential exceptions
+                e.printStackTrace()
             } finally {
-                // Close Realm instance on the same thread it was created
+                // Close Realm instance once the transaction is done
                 if (!realmDb.isClosed) {
                     realmDb.close()
                 }
             }
         }
     }
-
 }
 

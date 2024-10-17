@@ -19,9 +19,4 @@ object TimeUtils {
             .withZone(ZoneId.systemDefault()) // Adjust the time zone as needed
         return formatter.format(instant)
     }
-    fun convertTimestampToDay(timestamp: Long): String {
-        val date = Date(timestamp * 1000L) // Multiply by 1000 to convert seconds to milliseconds
-        val format = SimpleDateFormat("EEEE", Locale.getDefault()) // "EEEE" for full day name
-        return format.format(date)
-    }
 }

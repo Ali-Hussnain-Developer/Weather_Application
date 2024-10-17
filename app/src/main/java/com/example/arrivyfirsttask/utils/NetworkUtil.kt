@@ -7,7 +7,8 @@ import android.net.NetworkCapabilities
 import android.os.Build
 
 object NetworkUtil {
-    @SuppressLint("ObsoleteSdkInt")
+
+    @SuppressLint("ObsoleteSdkInt") // Suppress warnings for using deprecated methods
     fun isInternetAvailable(context: Context): Boolean {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
@@ -28,3 +29,4 @@ object NetworkUtil {
         }
     }
 }
+
