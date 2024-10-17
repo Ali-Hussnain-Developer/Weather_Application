@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -31,7 +30,6 @@ import com.example.arrivyfirsttask.viewModel.WeatherViewModel
 import kotlinx.coroutines.launch
 
 class HomeScreenFragment : Fragment() {
-    // Binding variable for the layout
     private var _binding: FragmentHomeScreenBinding? = null
     private val binding get() = _binding!!
     private lateinit var weatherViewModel: WeatherViewModel
@@ -47,7 +45,7 @@ class HomeScreenFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        init() // Initialize necessary components
+        init()
     }
 
     private fun init() {
@@ -61,8 +59,8 @@ class HomeScreenFragment : Fragment() {
     @SuppressLint("SetTextI18n")
     private fun setUpObserver() {
         // Observe weather data from the ViewModel
-        weatherViewModel.weatherDataRealm.observe(viewLifecycleOwner, Observer { weatherData ->
-            if(weatherData != null && weatherData.isNotEmpty()) {
+        weatherViewModel.weatherDataRealm.observe(viewLifecycleOwner) { weatherData ->
+            if (weatherData != null && weatherData.isNotEmpty()) {
                 weatherData.let {
                     // Update UI with weather data
                     binding.tvCityName.text = it[0].name
@@ -76,13 +74,13 @@ class HomeScreenFragment : Fragment() {
                     )
                 }
             }
-        })
+        }
 
         // Observe hourly weather data
-        weatherViewModel.hourlyWeatherDataRealm.observe(viewLifecycleOwner, Observer { hourlyData ->
+        weatherViewModel.hourlyWeatherDataRealm.observe(viewLifecycleOwner) { hourlyData ->
             val hourlyWeatherItems = ListUtils.convertToHourlyWeatherItem(hourlyData)
             setDataInRecyclerView(hourlyWeatherItems) // Update RecyclerView with hourly data
-        })
+        }
     }
 
     private fun setTodayDate() {
@@ -116,7 +114,6 @@ class HomeScreenFragment : Fragment() {
     }
 
     private fun moveToWeatherDetailScreen() {
-        // Navigate to the detail screen
         findNavController().navigate(R.id.action_homeScreenFragment_to_detailScreenFragment)
     }
 
@@ -154,7 +151,7 @@ class HomeScreenFragment : Fragment() {
                     }
 
                     is ApiResult.Error -> {
-                        binding.progressBar.visibility = View.GONE // Hide progress bar on error
+                        binding.progressBar.visibility = View.GONE
                         DialogUtils.showErrorDialog(
                             requireContext(),
                             result.exception.message.toString() // Show error dialog
@@ -162,7 +159,7 @@ class HomeScreenFragment : Fragment() {
                     }
 
                     null -> {
-                        binding.progressBar.visibility = View.GONE // Hide progress bar if null result
+                        binding.progressBar.visibility = View.GONE
                     }
                 }
             }
@@ -175,17 +172,17 @@ class HomeScreenFragment : Fragment() {
             weatherViewModel.hourlyWeatherData.collect { hourlyResult ->
                 when (hourlyResult) {
                     is ApiResult.Loading -> {
-                        binding.progressBar.visibility = View.VISIBLE // Show progress bar while loading
+                        binding.progressBar.visibility = View.VISIBLE
                     }
 
                     is ApiResult.Success -> {
-                        binding.progressBar.visibility = View.GONE // Hide progress bar on success
+                        binding.progressBar.visibility = View.GONE
                         // Update UI with hourly data
                         val hourlyItems = hourlyResult.data.list.map { hourlyData ->
                             val time = TimeUtils.convertTimestampToTime(hourlyData.dt) // Format timestamp to a readable time
-                            val temperature = "${hourlyData.main.temp}°C" // Adjust temperature unit as needed
-                            val icon = hourlyData.weather[0].icon // Get the icon code
-                            HourlyWeatherItem(time, temperature, icon) // Create HourlyWeatherItem
+                            val temperature = "${hourlyData.main.temp}°C"
+                            val icon = hourlyData.weather[0].icon
+                            HourlyWeatherItem(time, temperature, icon)
                         }
 
                         setDataInRecyclerView(hourlyItems) // Update RecyclerView with hourly data
@@ -193,16 +190,16 @@ class HomeScreenFragment : Fragment() {
                     }
 
                     is ApiResult.Error -> {
-                        binding.progressBar.visibility = View.GONE // Hide progress bar on error
+                        binding.progressBar.visibility = View.GONE
                         // Handle error for hourly data
                         DialogUtils.showErrorDialog(
                             requireContext(),
-                            hourlyResult.exception.message.toString() // Show error dialog
+                            hourlyResult.exception.message.toString()
                         )
                     }
 
                     null -> {
-                        binding.progressBar.visibility = View.GONE // Hide progress bar if null result
+                        binding.progressBar.visibility = View.GONE
                     }
                 }
             }

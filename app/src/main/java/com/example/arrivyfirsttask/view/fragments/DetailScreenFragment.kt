@@ -12,19 +12,12 @@ import com.example.arrivyfirsttask.model.repository.WeatherRepository
 import com.example.arrivyfirsttask.utils.TimeUtils
 import com.example.arrivyfirsttask.viewModel.WeatherViewModel
 
-// DetailScreenFragment is a Fragment that displays detailed weather information
+
 class DetailScreenFragment : Fragment() {
-
-    // Nullable binding variable for view binding
     private var _binding: FragmentDetailScreenBinding? = null
-
-    // Non-nullable property to access the binding
     private val binding get() = _binding!!
-
-    // ViewModel for managing weather data
     private lateinit var weatherViewModel: WeatherViewModel
 
-    // Called to create and inflate the fragment's view
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -35,13 +28,12 @@ class DetailScreenFragment : Fragment() {
         return binding.root
     }
 
-    // Called immediately after onCreateView, used for initializing components
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         init() // Initialize the fragment
     }
 
-    // Method for initializing the fragment's components
+
     private fun init() {
         setUpObserver() // Set up observer for weather data
     }
@@ -53,7 +45,6 @@ class DetailScreenFragment : Fragment() {
 
         // Observe weather data from the ViewModel
         weatherViewModel.weatherDataRealm.observe(viewLifecycleOwner) { weatherData ->
-            // Check if weather data is not null and not empty
             if (weatherData != null && weatherData.isNotEmpty()) {
                 weatherData.let {
                     // Update UI components with weather data
@@ -71,7 +62,6 @@ class DetailScreenFragment : Fragment() {
         }
     }
 
-    // Called when the view is destroyed to clean up references
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null // Set binding to null to avoid memory leaks

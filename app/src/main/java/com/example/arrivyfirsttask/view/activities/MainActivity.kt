@@ -8,21 +8,14 @@ import com.example.arrivyfirsttask.databinding.ActivityMainBinding
 
 // MainActivity is the entry point of the application, extending AppCompatActivity
 class MainActivity : AppCompatActivity() {
-
-    // Late-initialized property for view binding
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Inflate the layout using view binding
         binding = ActivityMainBinding.inflate(layoutInflater)
-
-        // Set the content view to the root of the inflated binding
         setContentView(binding.root)
     }
 
-    // Override onSupportNavigateUp to handle up navigation without an ActionBar
     override fun onSupportNavigateUp(): Boolean {
         // Get the NavHostFragment to access the NavController
         val navHostFragment = supportFragmentManager

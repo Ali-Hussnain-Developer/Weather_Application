@@ -17,11 +17,8 @@ class HourlyWeatherAdapter(private val weatherItems: List<HourlyWeatherItem>) :
 
         // Function to bind data from an HourlyWeatherItem to the UI elements in the ViewHolder
         fun bind(weatherItem: HourlyWeatherItem) {
-            // Set temperature and time values
             binding.tvTemperatureHourly.text = weatherItem.temperature
             binding.tvTimeHourly.text = weatherItem.time
-
-            // Load weather icon into the ImageView using ImageUtils helper class
             ImageUtils.loadWeatherIcon(
                 binding.root.context,
                 weatherItem.icon,
@@ -32,7 +29,6 @@ class HourlyWeatherAdapter(private val weatherItems: List<HourlyWeatherItem>) :
 
     // Called when RecyclerView needs a new ViewHolder for an item
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HourlyWeatherViewHolder {
-        // Inflate the layout for each item and return a new ViewHolder instance
         val binding = RvItemTodayWeatherBinding.inflate(
             LayoutInflater.from(parent.context), parent, false
         )

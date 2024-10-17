@@ -16,10 +16,10 @@ class SplashScreenActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySplashScreenBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        initialization()
+        init()
     }
 
-    private fun initialization() {
+    private fun init() {
         lifecycleScope.launch {
             delay(2000) // Delay for 3 seconds
             // Start the HomeActivity after the delay
